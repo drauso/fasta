@@ -79,7 +79,7 @@ public class League {
 		Set<Player> set = playersMap.get(role);
 
 		if (set.isEmpty()) {
-			throw new IllegalArgumentException("Giocatori finiti");
+			return null;
 		}
 
 		Stream<Player> stream = set.stream();
@@ -90,7 +90,7 @@ public class League {
 		case ALPHA:
 			return stream.findFirst();
 		default:
-			throw new IllegalArgumentException("Modalita non definita");
+			return null;
 		}
 	}
 
@@ -102,7 +102,7 @@ public class League {
 		long randomList = getRandomNumber(playersMap.values().size());
 		Set<Player> set = playersMap.values().stream().skip(randomList).findFirst().get();
 		if (set.isEmpty()) {
-			throw new IllegalArgumentException("Giocatori finiti");
+			return null;
 		}
 		long randomIndex = getRandomNumber(set.size());
 		return set.stream().skip(randomIndex).findFirst();
