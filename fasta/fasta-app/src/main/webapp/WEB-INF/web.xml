@@ -1,0 +1,73 @@
+<web-app version="3.0" xmlns="http://java.sun.com/xml/ns/javaee"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd">
+
+	<display-name>fasta</display-name>
+
+	<!-- Push -->
+	<servlet>
+		<servlet-name>Push Servlet</servlet-name>
+		<servlet-class>org.primefaces.push.PushServlet</servlet-class>
+		<init-param>
+			<param-name>org.atmosphere.cpr.broadcasterCacheClass</param-name>
+			<param-value>org.atmosphere.cache.UUIDBroadcasterCache</param-value>
+		</init-param>
+		<init-param>
+			<param-name>org.atmosphere.cpr.broadcaster.maxProcessingThreads</param-name>
+			<param-value>5</param-value>
+		</init-param>
+		<init-param>
+			<param-name>org.atmosphere.cpr.broadcaster.maxAsyncWriteThreads</param-name>
+			<param-value>5</param-value>
+		</init-param>
+		<init-param>
+			<param-name>org.atmosphere.cpr.broadcaster.shareableThreadPool</param-name>
+			<param-value>true</param-value>
+		</init-param>
+		<init-param>
+			<param-name>org.atmosphere.pool.poolableProvider</param-name>
+			<param-value>org.atmosphere.pool.BoundedApachePoolableProvider</param-value>
+		</init-param>
+		<init-param>
+			<param-name>org.atmosphere.pool.BoundedApachePoolableProvider.size</param-name>
+			<param-value>200</param-value>
+		</init-param>
+		<init-param>
+			<param-name>org.atmosphere.cpr.CometSupport.maxInactiveActivity</param-name>
+			<!-- 91 min -->
+			<param-value>5460000</param-value>
+		</init-param>
+        <init-param>
+			<param-name>org.atmosphere.interceptor.HeartbeatInterceptor.heartbeatFrequencyInSeconds</param-name>
+			<param-value>60</param-value>
+		</init-param>
+		<load-on-startup>1</load-on-startup>
+		<async-supported>true</async-supported>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>Push Servlet</servlet-name>
+		<url-pattern>/primepush/*</url-pattern>
+	</servlet-mapping>
+	<!-- JSF -->
+	<listener>
+		<listener-class>com.sun.faces.config.ConfigureListener</listener-class>
+	</listener>
+
+	<servlet>
+		<servlet-name>Faces Servlet</servlet-name>
+		<servlet-class>javax.faces.webapp.FacesServlet</servlet-class>
+		<load-on-startup>1</load-on-startup>
+		<async-supported>true</async-supported>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>Faces Servlet</servlet-name>
+		<url-pattern>*.xhtml</url-pattern>
+	</servlet-mapping>
+
+
+	<!-- Accueil -->
+	<welcome-file-list>
+		<welcome-file>index.html</welcome-file>
+	</welcome-file-list>
+
+</web-app>

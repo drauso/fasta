@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<ui:composition
+	xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:p="http://primefaces.org/ui"
+	template="/WEB-INF/templates/root.xhtml">
+
+	<ui:define name="title">FASTA</ui:define>
+
+	<ui:define name="page">
+		<div id="global">
+			<div class="fasta">
+				<h:form id="form">
+					<p:growl id="growl" showDetail="true" />
+				
+					<div class="menu">
+						<ui:include src="menu.xhtml" />
+					</div>
+
+					<div class="contentBackground">
+						<ui:insert name="contenu" />
+					</div>
+					<div class="contentBackgroundNone">
+						<ui:insert name="piedPage" />
+					</div>
+
+				</h:form>
+
+				<p:socket
+					onMessage="handleMessage"
+					channel="/{room}"
+					transport="sse"
+					autoConnect="false"
+					widgetVar="subscriber" />
+
+				<script type="text/javascript">
+                    function handleMessage(message) {
+                        var chatContent = $(PrimeFaces.escapeClientId('form:public')), text = (message.user) ? message.user
+                                + ':' + message.text
+                                : message.text;
+
+                        chatContent.append(text + '<br />');
+
+                        //keep scroll
+                        chatContent.scrollTop(chatContent.height());
+
+                        if (message.updateList) {
+                            updateList();
+                        }
+                    }
+                </script>
+
+			</div>
+		</div>
+	</ui:define>
+</ui:composition>
