@@ -26,27 +26,31 @@
 
 				</h:form>
 
-				<p:socket onMessage="handleMessage" channel="/{room}"
-					transport="sse" autoConnect="false" widgetVar="subscriber" />
+				<p:socket transport="long-polling" widgetVar="subsciber"
+					onMessage="handleMessage" channel="/asta" autoConnect="true" />
 
 				<script type="text/javascript">
 
                 	function handleMessage(message) {
+                		console.log(message);
+                		var chatContent;
                 		switch (message.type) {
                 	    case "bid":
+                	    	chatContent = $(PrimeFaces.escapeClientId('form:public')), text = message.value;
+                            chatContent.append(' '+text+' ' + '<br />');
                 	        break;
                 	    case "information":
-                	    	 var chatContent = $(PrimeFaces.escapeClientId('form:public')), text = message.text;
-                             chatContent.append(text + '<br />');
-                             //keep scroll
-                             chatContent.scrollTop(chatContent.height());
-                             if (message.updateList) {
-                                 updateList();
-                             }
+                	    	 chatContent = $(PrimeFaces.escapeClientId('form:public')), text = message.text;
+                	    	 chatContent.append(text + '<br />');
                 	        break;
                     	default:
                 	        console.log("Channel not defined");
                 	    }
+                        //keep scroll
+                        chatContent.scrollTop(chatContent.height());
+                        if (message.updateList) {
+                            updateList();
+                        }
                     }
                 </script>
 

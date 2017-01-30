@@ -6,10 +6,16 @@ import lombok.Getter;
 public class Bid implements PushMessage {
 
 	private static final long serialVersionUID = -7615006319432525288L;
-	private final int value;
+	private int value;
+	private String text;
 
-	public Bid(final int value) {
+	public Bid(String text, int value) {
+		this.text = text;
 		this.value = value;
+	}
+
+	public String getType() {
+		return "bid";
 	}
 
 }

@@ -7,9 +7,9 @@ public class Information implements PushMessage {
 
 	private static final long serialVersionUID = 5579261076139734487L;
 
-	private final String text;
+	private String text;
 
-	public Information(final String text) {
+	public Information(String text) {
 		this.text = text;
 	}
 
