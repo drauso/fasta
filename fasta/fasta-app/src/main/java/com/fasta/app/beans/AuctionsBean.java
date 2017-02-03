@@ -13,7 +13,7 @@ import javax.faces.bean.ManagedBean;
 import com.fasta.app.entities.League;
 import com.fasta.app.entities.Team;
 
-@ManagedBean
+@ManagedBean(name = "auctionsBean", eager = true)
 @ApplicationScoped
 public class AuctionsBean implements Serializable {
 

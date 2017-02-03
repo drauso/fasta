@@ -33,8 +33,15 @@ public class Team {
 		releasedPlayers = new TreeSet<Player>(playerComparator);
 	}
 
-	public void buyPlayer(Player player, BigDecimal offert) {
+	public boolean hasBudget(BigDecimal offert) {
 		if (budget.compareTo(offert) < 0) {
+			return false;
+		}
+		return true;
+	}
+
+	public void buyPlayer(Player player, BigDecimal offert) {
+		if (!hasBudget(offert)) {
 			throw new IllegalArgumentException("Saldo non disponibile");
 		}
 		players.add(player);
