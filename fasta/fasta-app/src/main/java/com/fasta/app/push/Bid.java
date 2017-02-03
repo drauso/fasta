@@ -1,21 +1,30 @@
 package com.fasta.app.push;
 
+import java.math.BigDecimal;
+import java.util.Date;
+
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
 @Getter
-public class Bid implements PushMessage {
+@EqualsAndHashCode(of = { "value" })
+public class Bid implements PushBid {
 
 	private static final long serialVersionUID = -7615006319432525288L;
-	private int value;
-	private String text;
+	private BigDecimal value;
+	private String leagueName;
+	private String teamName;
+	private Date date;
 
-	public Bid(String text, int value) {
-		this.text = text;
+	public Bid(BigDecimal value, String leagueName, String teamName) {
 		this.value = value;
+		this.leagueName = leagueName;
+		this.teamName = teamName;
+		this.date = new Date();
 	}
 
+	@Override
 	public String getType() {
 		return "bid";
 	}
-
 }

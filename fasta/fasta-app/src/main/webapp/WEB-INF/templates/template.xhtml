@@ -11,7 +11,7 @@
 		<div id="global">
 			<div class="fasta">
 				<h:form id="form">
-					<p:growl id="growl" showDetail="true" />
+					<p:growl autoUpdate="true" id="growl" showDetail="true" />
 
 					<div class="menu">
 						<ui:include src="menu.xhtml" />
@@ -27,30 +27,13 @@
 				</h:form>
 
 				<p:socket transport="long-polling" widgetVar="subsciber"
-					onMessage="handleMessage" channel="/asta" autoConnect="true" />
+					onMessage="handleMessage" channel="/asta" autoConnect="true"/>
 
 				<script type="text/javascript">
 
                 	function handleMessage(message) {
                 		console.log(message);
-                		var chatContent;
-                		switch (message.type) {
-                	    case "bid":
-                	    	chatContent = $(PrimeFaces.escapeClientId('form:public')), text = message.value;
-                            chatContent.append(' '+text+' ' + '<br />');
-                	        break;
-                	    case "information":
-                	    	 chatContent = $(PrimeFaces.escapeClientId('form:public')), text = message.text;
-                	    	 chatContent.append(text + '<br />');
-                	        break;
-                    	default:
-                	        console.log("Channel not defined");
-                	    }
-                        //keep scroll
-                        chatContent.scrollTop(chatContent.height());
-                        if (message.updateList) {
-                            updateList();
-                        }
+                		update();
                     }
                 </script>
 

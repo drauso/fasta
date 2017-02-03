@@ -7,28 +7,56 @@
 	template="/WEB-INF/templates/template.xhtml">
 
 	<ui:define name="contenu">
-		<p:remoteCommand name="updateList" update="teams" process="@this" />
+		<p:remoteCommand name="update" update="container" process="container"
+			ignoreAutoUpdate="true" />
 
+		<p:poll widgetVar="myPoll" interval="5" autoStart="false"
+			listener="#{teamViewBean.increment}" />
+
+		
 		<p:fieldset id="container" legend="PrimeChat" toggleable="true">
+			<h:panelGroup rendered="#{teamViewBean.admin}">
+				<p:commandButton value="Start"
+					disabled="#{teamViewBean.player != null}"
+					action="#{teamViewBean.startAuction}" />
+				<p:commandButton value="End" onclick="PF('myPoll').stop();"
+					rendered="#{teamViewBean.player != null}"
+					action="#{teamViewBean.endAuction}" />
+			</h:panelGroup>
 
 			<h:panelGroup rendered="#{teamViewBean.loggedIn}">
-				<h:panelGrid columns="2" style="width:100%">
-					<p:outputPanel id="public" layout="block"/>
 
-					<p:dataList id="teams" var="team" value="#{auctionsBean.getTeams('asta')}">
+
+				<h:panelGrid columns="2" style="width:100%">
+					<p:dataList id="teams" var="team"
+						value="#{auctionsBean.getTeams('asta')}">
 						<f:facet name="header">
 							<h:outputLabel value="Teams" />
 						</f:facet>
-                    #{team.name}
-                </p:dataList>
+                    	#{team.name}
+                	</p:dataList>
 				</h:panelGrid>
 
 				<p:separator />
 
-				<p:inputText value="#{teamViewBean.bid}"/>
+				<h:outputText id="txt_count" value="#{teamViewBean.timer.number}" />
+
+				<h:panelGrid rendered="#{teamViewBean.player != null}" columns="2"
+					style="width:100%">
+					<h:outputLabel value="#{teamViewBean.player.surname}" />
+					<p:dataList id="bids" var="bid" value="#{teamViewBean.getBids()}">
+						<f:facet name="header">
+							<h:outputLabel value="Bids" />
+						</f:facet>
+	                    #{bid.value}
+	                </p:dataList>
+				</h:panelGrid>
+
+				<p:separator />
+
+				<p:inputText value="#{teamViewBean.bid}" />
 				<p:spacer width="5" />
-				<p:commandButton value="Send"
-					action="#{teamViewBean.sendBid}" />
+				<p:commandButton value="Send" action="#{teamViewBean.sendBid}" />
 				<p:spacer width="5" />
 				<p:commandButton value="Disconnect"
 					actionListener="#{teamViewBean.disconnect}" global="false"
@@ -39,7 +67,8 @@
             Team: <p:inputText value="#{teamViewBean.teamName}" />
 
 				<p:spacer width="5" />
-				<p:commandButton value="Login" action="#{teamViewBean.login(auctionsBean.getLeague('asta'))}"
+				<p:commandButton value="Login"
+					action="#{teamViewBean.login(auctionsBean.getLeague('asta'))}"
 					update="container" icon="ui-icon-person" />
 			</h:panelGroup>
 
