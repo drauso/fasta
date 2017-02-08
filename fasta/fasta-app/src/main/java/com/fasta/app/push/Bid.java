@@ -9,7 +9,6 @@ import lombok.Getter;
 @Getter
 @EqualsAndHashCode(of = { "value" })
 public class Bid implements PushMessage {
-
 	private BigDecimal value;
 	private String leagueName;
 	private String teamName;
@@ -26,5 +25,4 @@ public class Bid implements PushMessage {
 	public String getType() {
 		return "bid";
 	}
-
 }

@@ -66,7 +66,7 @@ public class TeamViewBean implements Serializable {
 
 	public void disconnect() {
 		// remove user and update ui
-		league.removeTeam(teamName);
+		league.removeTeam(teamName); 
 		loggedIn = false;
 		teamName = null;
 		EVENT_BUS.publish(CHANNEL, new Information(teamName + " e' uscito"));

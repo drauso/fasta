@@ -10,7 +10,6 @@ import org.primefaces.push.annotation.Singleton;
 import org.primefaces.push.impl.JSONEncoder;
 
 import com.fasta.app.beans.AuctionsBean;
-
 @PushEndpoint("/{room}")
 @Singleton
 public class AuctionResource {
