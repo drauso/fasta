@@ -99,7 +99,7 @@ public class League {
 		}
 
 		if (history.containsKey(playerToBuy)) {
-			logger.info("callBid read unlock");
+			logger.info("callBid read unlofck");
 			readWriteLock.readLock().unlock();
 
 			logger.info("callBid write lock");
