@@ -12,7 +12,12 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Stream;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import com.fasta.app.comparators.PlayerComparator;
 import com.fasta.app.enums.Order;
@@ -28,6 +33,8 @@ import lombok.ToString;
 @EqualsAndHashCode(of = "name")
 public class League {
 
+	private static final Logger logger = LogManager.getLogger(League.class);
+
 	private final String name;
 	private final BigDecimal globalBudget;
 	private final String password;
@@ -39,6 +46,8 @@ public class League {
 	private Timer timer;
 	private Player playerToBuy;
 	private Map<Player, List<Bid>> history = new HashMap<>();
+
+	private ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
 
 	public League(final String name, final BigDecimal budget, final String password) {
 		this.name = name;
@@ -54,7 +63,7 @@ public class League {
 		callOrderMap.put(Role.DEFENDER, Order.ALPHA);
 		callOrderMap.put(Role.MIDFIELDER, Order.ALPHA);
 		callOrderMap.put(Role.FORWARD, Order.ALPHA);
-		timer = new Timer(3);
+		timer = new Timer(10);
 		populatePlayers();
 	}
 
@@ -82,13 +91,32 @@ public class League {
 	}
 
 	public void callBid(Bid bid) {
+		logger.info("callBid read lock");
+		readWriteLock.readLock().lock();
+
 		if (playerToBuy == null) {
 			return;
 		}
-		if (!history.containsKey(playerToBuy)) {
+
+		if (history.containsKey(playerToBuy)) {
+			logger.info("callBid read unlock");
+			readWriteLock.readLock().unlock();
+
+			logger.info("callBid write lock");
+			readWriteLock.writeLock().lock();
+
+			try {
+				addBid(bid);
+			} finally {
+				logger.info("callBid write unlock");
+				readWriteLock.writeLock().unlock();
+			}
+		} else {
+			logger.info("callBid read unlock");
+			readWriteLock.readLock().unlock();
 			throw new IllegalArgumentException("Offerta non valida");
 		}
-		addBid(bid);
+
 	}
 
 	private void addBid(Bid bid) {
@@ -116,9 +144,13 @@ public class League {
 		return null;
 	}
 
-	public void sellPlayer() {
+	public Bid sellPlayer() {
+		readWriteLock.writeLock().lock();
+
+		logger.info("sellPlayer write lock");
+
 		if (playerToBuy == null) {
-			return;
+			new IllegalArgumentException("Giocatore non in vendita");
 		}
 		Optional<Player> player = getPlayer(playerToBuy);
 		if (!player.isPresent()) {
@@ -136,6 +168,12 @@ public class League {
 		}
 		player.get().sell(price);
 		playerToBuy = null;
+
+		readWriteLock.writeLock().unlock();
+
+		logger.info("sellPlayer write unlock");
+
+		return lastBid;
 	}
 
 	public Team addTeam(String name, String password) {

@@ -8,9 +8,8 @@ import lombok.Getter;
 
 @Getter
 @EqualsAndHashCode(of = { "value" })
-public class Bid implements PushBid {
+public class Bid implements PushMessage {
 
-	private static final long serialVersionUID = -7615006319432525288L;
 	private BigDecimal value;
 	private String leagueName;
 	private String teamName;
@@ -27,4 +26,5 @@ public class Bid implements PushBid {
 	public String getType() {
 		return "bid";
 	}
+
 }

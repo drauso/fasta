@@ -13,8 +13,13 @@
 		<p:poll widgetVar="myPoll" interval="5" autoStart="false"
 			listener="#{teamViewBean.increment}" />
 
+		<p:fieldset id="chat" legend="Chat" toggleable="true">
+			<p:outputPanel id="public" layout="block"
+				styleClass="ui-corner-all ui-widget-content chatlogs" />
+		</p:fieldset>
 		
-		<p:fieldset id="container" legend="PrimeChat" toggleable="true">
+		<p:fieldset id="container" legend="Container" toggleable="true">
+
 			<h:panelGroup rendered="#{teamViewBean.admin}">
 				<p:commandButton value="Start"
 					disabled="#{teamViewBean.player != null}"
@@ -25,7 +30,6 @@
 			</h:panelGroup>
 
 			<h:panelGroup rendered="#{teamViewBean.loggedIn}">
-
 
 				<h:panelGrid columns="2" style="width:100%">
 					<p:dataList id="teams" var="team"
@@ -48,19 +52,37 @@
 						<f:facet name="header">
 							<h:outputLabel value="Bids" />
 						</f:facet>
-	                    #{bid.value}
+	                    #{bid.teamName}: #{bid.value}
 	                </p:dataList>
 				</h:panelGrid>
 
 				<p:separator />
 
-				<p:inputText value="#{teamViewBean.bid}" />
-				<p:spacer width="5" />
-				<p:commandButton value="Send" action="#{teamViewBean.sendBid}" />
-				<p:spacer width="5" />
-				<p:commandButton value="Disconnect"
-					actionListener="#{teamViewBean.disconnect}" global="false"
-					update="container" />
+				<h:panelGrid
+					
+					columns="2">
+					<p:inputText id="bidValue" value="#{teamViewBean.bid}" />
+					<p:commandButton value="Send Bid" disabled="#{teamViewBean.player == null}" action="#{teamViewBean.sendBid}" />
+				</h:panelGrid>
+
+				<h:panelGrid columns="3">
+					<p:inputText id="messageValue" value="#{teamViewBean.message}" />
+					<p:commandButton value="Send Message"
+						action="#{teamViewBean.sendMessage}" />
+					<p:commandButton value="Disconnect"
+						actionListener="#{teamViewBean.disconnect}" />
+				</h:panelGrid>
+
+				<p:fieldset id="team" legend="#{teamViewBean.team.name}" toggleable="true" rendered="#{not teamViewBean.admin}">
+						Budget Rimanente: #{teamViewBean.team.budget}						
+						<p:dataList id="players" var="p" value="#{teamViewBean.team.getPlayers()}">
+								<f:facet name="header">
+									<h:outputLabel value="Players" />
+								</f:facet>
+			                    #{p.name} #{p.surname} #{p.role} #{p.team} Prezzo: #{p.price}
+			             </p:dataList>
+				</p:fieldset>
+			
 			</h:panelGroup>
 
 			<h:panelGroup rendered="#{not teamViewBean.loggedIn}">
@@ -69,11 +91,12 @@
 				<p:spacer width="5" />
 				<p:commandButton value="Login"
 					action="#{teamViewBean.login(auctionsBean.getLeague('asta'))}"
-					update="container" icon="ui-icon-person" />
+					icon="ui-icon-person" />
 			</h:panelGroup>
 
 		</p:fieldset>
-
+		
+		
 	</ui:define>
 
 </ui:composition>

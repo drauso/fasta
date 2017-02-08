@@ -27,14 +27,34 @@
 				</h:form>
 
 				<p:socket transport="long-polling" widgetVar="subsciber"
-					onMessage="handleMessage" channel="/asta" autoConnect="true"/>
+					onMessage="handleMessage" channel="/asta" autoConnect="true" />
 
 				<script type="text/javascript">
 
                 	function handleMessage(message) {
                 		console.log(message);
-                		update();
-                    }
+
+                		switch (message.type) {
+                	    case "information":
+                	    	var chatContent = $(PrimeFaces.escapeClientId('form:public'));
+                	     	text = message.text;
+                	 	 	chatContent.append(text + '<br />');
+                	 	 	$(PrimeFaces.escapeClientId('form:messageValue')).val('').focus();
+                	        break;
+                	    case "bid":
+                	    	var bidContent = $(PrimeFaces.escapeClientId('form:bidValue'));
+                	    	var value = message.value;
+                	    	bidContent.val(value+1).focus();
+                	        break;
+                	    case "start":
+                	    	var bidContent = $(PrimeFaces.escapeClientId('form:bidValue'));
+                	    	bidContent.val(1).focus();
+                	        break;
+                	    default:
+                	    	break;
+                    	}
+	                	update();
+                	}
                 </script>
 
 			</div>

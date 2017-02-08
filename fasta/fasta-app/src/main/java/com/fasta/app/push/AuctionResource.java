@@ -27,22 +27,6 @@ public class AuctionResource {
 
 	@OnMessage(encoders = { JSONEncoder.class })
 	public PushMessage onMessage(PushMessage push) {
-		// League league = auctionsBean.getLeague(push.getLeagueName());
-		// switch (push.getType()) {
-		// case "bid":
-		// Bid bid = (Bid) push;
-		// league.callBid(bid);
-		// break;
-		// case "auction":
-		// Auction auction = (Auction) push;
-		// league.callAuction(auction.getRole());
-		// break;
-		// case "sell":
-		// league.sellPlayer();
-		// break;
-		// default:
-		// break;
-		// }
 		return push;
 	}
 
