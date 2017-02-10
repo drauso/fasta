@@ -75,10 +75,10 @@ public class LeagueTest {
 		Assertions.assertThat(leagueTest.getTeams()).isNotNull().isNotEmpty().containsOnly(teamTest);
 	}
 
-	@Test(expected = IllegalArgumentException.class)
-	public void shouldNotAddTeam() {
+	public void shouldNotAddAndGetTeam() {
 		shouldAddTeam();
 		leagueTest.addTeam("name", "password");
+		Assertions.assertThat(leagueTest.getTeams()).isNotNull().isNotEmpty().containsOnly(teamTest);
 	}
 
 	@Test

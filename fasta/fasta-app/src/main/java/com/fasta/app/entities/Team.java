@@ -5,9 +5,6 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import com.fasta.app.comparators.PlayerComparator;
 import com.fasta.app.enums.Role;
 
@@ -19,8 +16,6 @@ import lombok.ToString;
 @EqualsAndHashCode(of = "name")
 @ToString
 public class Team {
-
-	private static final Logger logger = LogManager.getLogger(Team.class);
 
 	private final String name;
 	private final String password;

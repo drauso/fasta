@@ -5,5 +5,4 @@ import java.io.Serializable;
 @FunctionalInterface
 public interface PushMessage extends Serializable {
 	String getType();
-
 }

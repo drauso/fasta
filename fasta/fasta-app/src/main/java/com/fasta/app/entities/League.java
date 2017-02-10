@@ -1,19 +1,17 @@
 package com.fasta.app.entities;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.locks.StampedLock;
 import java.util.stream.Stream;
 
 import org.apache.logging.log4j.LogManager;
@@ -45,9 +43,9 @@ public class League {
 	private Set<Team> teams;
 	private Timer timer;
 	private Player playerToBuy;
-	private Map<Player, List<Bid>> history = new HashMap<>();
+	private Map<Player, LinkedBlockingDeque<Bid>> history = new HashMap<>();
 
-	private ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
+	private final StampedLock stampLock;
 
 	public League(final String name, final BigDecimal budget, final String password) {
 		this.name = name;
@@ -63,7 +61,8 @@ public class League {
 		callOrderMap.put(Role.DEFENDER, Order.ALPHA);
 		callOrderMap.put(Role.MIDFIELDER, Order.ALPHA);
 		callOrderMap.put(Role.FORWARD, Order.ALPHA);
-		timer = new Timer(10);
+		timer = new Timer(3);
+		stampLock = new StampedLock();
 		populatePlayers();
 	}
 
@@ -78,45 +77,54 @@ public class League {
 
 	public void callAuction(Role role) {
 		if (playerToBuy != null) {
-			throw new IllegalArgumentException("Un'asta é in corso");
+			throw new IllegalStateException("Un'asta é in corso");
 		}
 
 		Optional<Player> player = getNextPlayer(role);
 		if (player.isPresent()) {
 			playerToBuy = player.get();
-			history.put(playerToBuy, new ArrayList<>());
+			history.put(playerToBuy, new LinkedBlockingDeque<Bid>());
 		} else {
-			throw new IllegalArgumentException("Giocatori non  disponibili");
+			throw new IllegalStateException("Giocatori non  disponibili");
 		}
 	}
 
 	public void callBid(Bid bid) {
-		logger.info("callBid read lock");
-		readWriteLock.readLock().lock();
+		logger.debug("callBid try optimistic read lock");
+		long stamp = stampLock.tryOptimisticRead();
 
-		if (playerToBuy == null) {
-			return;
+		bidValidation();
+
+		if (!stampLock.validate(stamp)) {
+
+			logger.debug("callBid read lock");
+			stamp = stampLock.readLock();
+			try {
+				bidValidation();
+			} finally {
+				logger.debug("callBid read unlock");
+				stampLock.unlock(stamp);
+			}
 		}
 
-		if (history.containsKey(playerToBuy)) {
-			logger.info("callBid read unlofck");
-			readWriteLock.readLock().unlock();
+		logger.debug("callBid write lock");
+		stamp = stampLock.writeLock();
+		try {
+			addBid(bid);
+		} finally {
+			logger.debug("callBid write unlock");
+			stampLock.unlock(stamp);
+		}
 
-			logger.info("callBid write lock");
-			readWriteLock.writeLock().lock();
+	}
 
-			try {
-				addBid(bid);
-			} finally {
-				logger.info("callBid write unlock");
-				readWriteLock.writeLock().unlock();
-			}
-		} else {
-			logger.info("callBid read unlock");
-			readWriteLock.readLock().unlock();
+	private void bidValidation() {
+		if (playerToBuy == null) {
+			throw new IllegalStateException("Giocatore non presente");
+		}
+		if (!history.containsKey(playerToBuy)) {
 			throw new IllegalArgumentException("Offerta non valida");
 		}
-
 	}
 
 	private void addBid(Bid bid) {
@@ -128,61 +136,55 @@ public class League {
 			throw new IllegalArgumentException("Saldo non disponibile");
 		}
 
-		Bid lastBid = findLastBid();
+		Bid lastBid = history.get(playerToBuy).peek();
 		if (lastBid == null || lastBid.getValue().compareTo(bid.getValue()) < 0) {
-			history.get(playerToBuy).add(bid);
+			history.get(playerToBuy).push(bid);
 		} else {
 			throw new IllegalArgumentException("Offerta troppo bassa");
 		}
 	}
 
-	private Bid findLastBid() {
-		List<Bid> list = history.get(playerToBuy);
-		if (list != null && !list.isEmpty()) {
-			return list.get(list.size() - 1);
-		}
-		return null;
-	}
-
 	public Bid sellPlayer() {
-		readWriteLock.writeLock().lock();
-
 		logger.info("sellPlayer write lock");
-
-		if (playerToBuy == null) {
-			new IllegalArgumentException("Giocatore non in vendita");
-		}
-		Optional<Player> player = getPlayer(playerToBuy);
-		if (!player.isPresent()) {
-			throw new IllegalArgumentException("Giocatore non disponibile");
-		}
-
-		Bid lastBid = findLastBid();
-		BigDecimal price = BigDecimal.ZERO;
-		if (lastBid != null) {
-			Optional<Team> team = getTeam(lastBid.getTeamName());
-			if (team.isPresent()) {
-				price = lastBid.getValue();
-				team.get().buyPlayer(playerToBuy, price);
+		long stamp = stampLock.writeLock();
+		Bid lastBid = null;
+		try {
+			if (playerToBuy == null) {
+				new IllegalArgumentException("Giocatore non in vendita");
 			}
+			Optional<Player> player = getPlayer(playerToBuy);
+			if (!player.isPresent()) {
+				throw new IllegalArgumentException("Giocatore non disponibile");
+			}
+
+			lastBid = history.get(playerToBuy).peek();
+			BigDecimal price = BigDecimal.ZERO;
+			if (lastBid != null) {
+				Optional<Team> team = getTeam(lastBid.getTeamName());
+				if (team.isPresent()) {
+					price = lastBid.getValue();
+					team.get().buyPlayer(playerToBuy, price);
+				}
+			}
+			player.get().sell(price);
+			playerToBuy = null;
+		} finally {
+			logger.info("sellPlayer write unlock");
+			stampLock.unlock(stamp);
 		}
-		player.get().sell(price);
-		playerToBuy = null;
-
-		readWriteLock.writeLock().unlock();
-
-		logger.info("sellPlayer write unlock");
 
 		return lastBid;
 	}
 
 	public Team addTeam(String name, String password) {
-		if (teams.stream().noneMatch(t -> t.getName().equalsIgnoreCase(name))) {
+		Optional<Team> t = getTeam(name);
+		if (t.isPresent()) {
+			return getTeam(name).get();
+		} else {
 			Team team = new Team(name, globalBudget, password);
 			teams.add(team);
 			return team;
 		}
-		throw new IllegalArgumentException("Squadra gia presente");
 	}
 
 	public void removeTeam(String name) {
@@ -192,7 +194,7 @@ public class League {
 		}
 	}
 
-	private Optional<Team> getTeam(String name) {
+	public Optional<Team> getTeam(String name) {
 		return teams.stream().filter(t -> t.getName().equalsIgnoreCase(name)).findFirst();
 	}
 

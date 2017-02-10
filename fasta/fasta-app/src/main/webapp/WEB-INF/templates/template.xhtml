@@ -23,6 +23,8 @@
 						<ui:insert name="piedPage" />
 					</div>
 
+					<p:blockUI block="@form" trigger="sendMessageAction sendBidAction" style="z-index:1" />
+
 				</h:form>
 
 				<p:socket transport="long-polling" widgetVar="subsciber"

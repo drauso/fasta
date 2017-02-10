@@ -2,14 +2,16 @@ package com.fasta.app.beans;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.util.Collections;
-import java.util.List;
+import java.util.concurrent.LinkedBlockingDeque;
 
 import javax.faces.application.FacesMessage;
+import javax.faces.application.FacesMessage.Severity;
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.SessionScoped;
 import javax.faces.context.FacesContext;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.primefaces.context.RequestContext;
 import org.primefaces.push.EventBus;
 import org.primefaces.push.EventBusFactory;
@@ -32,12 +34,13 @@ import lombok.Setter;
 @Getter
 public class TeamViewBean implements Serializable {
 
+	private static final Logger LOGGER = LogManager.getLogger(TeamViewBean.class);
+	private static final String BANDITORE = "banditore";
 	private static final EventBus EVENT_BUS = EventBusFactory.getDefault().eventBus();
 
 	private static final String CHANNEL = "/asta";
 
 	private League league;
-	private Team team;
 	private boolean loggedIn;
 	private boolean admin;
 
@@ -46,30 +49,29 @@ public class TeamViewBean implements Serializable {
 	@Setter
 	private String message;
 	@Setter
-	private String teamName = "banditore";
+	private String teamName = BANDITORE;
 
 	public void login(League league) {
 		this.league = league;
-		try {
-			team = league.addTeam(teamName, "");
-			if (teamName.equals("banditore")) {
-				admin = true;
-			}
-			loggedIn = true;
-			EVENT_BUS.publish(CHANNEL, new Information(teamName + " e' entrato"));
-		} catch (IllegalArgumentException e) {
-			loggedIn = false;
-			FacesContext.getCurrentInstance().addMessage(null,
-					new FacesMessage(FacesMessage.SEVERITY_ERROR, "Squadra presente", "Prova con un altro nome."));
+		league.addTeam(teamName, "");
+		if (teamName.equals(BANDITORE)) {
+			admin = true;
 		}
+		loggedIn = true;
+		EVENT_BUS.publish(CHANNEL, new Information(teamName + " e' entrato"));
+	}
+
+	public void remove() {
+		league.removeTeam(teamName);
+		EVENT_BUS.publish(CHANNEL, new Information(teamName + " e' stato rimosso"));
+		loggedIn = false;
+		teamName = null;
 	}
 
 	public void disconnect() {
-		// remove user and update ui
-		league.removeTeam(teamName); 
+		EVENT_BUS.publish(CHANNEL, new Information(teamName + " e' uscito"));
 		loggedIn = false;
 		teamName = null;
-		EVENT_BUS.publish(CHANNEL, new Information(teamName + " e' uscito"));
 	}
 
 	public void sendMessage() {
@@ -83,9 +85,9 @@ public class TeamViewBean implements Serializable {
 			league.getTimer().reset();
 			RequestContext.getCurrentInstance().execute("PF('myPoll').start();");
 			EVENT_BUS.publish(CHANNEL, new Bid(BigDecimal.ZERO, league.getName(), null));
-		} catch (IllegalArgumentException e) {
-			FacesContext.getCurrentInstance().addMessage(null,
-					new FacesMessage(FacesMessage.SEVERITY_ERROR, "Errore", e.getMessage()));
+		} catch (IllegalStateException e) {
+			LOGGER.debug("Impossibile cominciare l'asta");
+			addMessage(FacesMessage.SEVERITY_ERROR, null, e.getMessage());
 		}
 	}
 
@@ -95,12 +97,12 @@ public class TeamViewBean implements Serializable {
 			league.getTimer().reset();
 			RequestContext.getCurrentInstance().execute("PF('myPoll').stop();");
 			String sellMessage = (lastBid == null) ? "Giocatore invenduto"
-					: "Il giocatore +  e' stato venduto a " + lastBid.getTeamName() + " per " + lastBid.getValue()
+					: "Il giocatore e' stato venduto a " + lastBid.getTeamName() + " per " + lastBid.getValue()
 							+ " crediti";
 			EVENT_BUS.publish(CHANNEL, new Information("Banditore:" + sellMessage));
 		} catch (IllegalArgumentException e) {
-			FacesContext.getCurrentInstance().addMessage(null,
-					new FacesMessage(FacesMessage.SEVERITY_ERROR, "Errore", e.getMessage()));
+			LOGGER.debug("Impossibile terminare l'asta");
+			addMessage(FacesMessage.SEVERITY_ERROR, null, e.getMessage());
 		}
 	}
 
@@ -110,9 +112,9 @@ public class TeamViewBean implements Serializable {
 			league.callBid(send);
 			league.getTimer().reset();
 			EVENT_BUS.publish(CHANNEL, send);
-		} catch (IllegalArgumentException e) {
-			FacesContext.getCurrentInstance().addMessage(null,
-					new FacesMessage(FacesMessage.SEVERITY_ERROR, "Errore", e.getMessage()));
+		} catch (IllegalStateException | IllegalArgumentException e) {
+			LOGGER.debug("Impossibile accettare l'offerta");
+			addMessage(FacesMessage.SEVERITY_ERROR, null, e.getMessage());
 		}
 	}
 
@@ -122,8 +124,16 @@ public class TeamViewBean implements Serializable {
 			timer.increment();
 			EVENT_BUS.publish(CHANNEL, (PushMessage) () -> "update");
 		} catch (TimeOutException e) {
+			LOGGER.debug("Tempo scaduto, asta terminata");
 			endAuction();
 		}
+	}
+
+	public Team getTeam() {
+		if (league == null) {
+			return null;
+		}
+		return league.getTeam(teamName).orElse(null);
 	}
 
 	public Timer getTimer() {
@@ -137,11 +147,15 @@ public class TeamViewBean implements Serializable {
 		return league.getPlayerToBuy();
 	}
 
-	public List<Bid> getBids() {
+	public LinkedBlockingDeque<Bid> getBids() {
 		if (league == null || league.getPlayerToBuy() == null) {
-			return Collections.emptyList();
+			return new LinkedBlockingDeque<>();
 		}
 		return league.getHistory().get(league.getPlayerToBuy());
+	}
+
+	private void addMessage(Severity severity, String summary, String detail) {
+		FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(severity, summary, detail));
 	}
 
 }
