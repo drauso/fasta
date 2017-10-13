@@ -17,6 +17,8 @@ import com.fasta.app.entities.Team;
 @ApplicationScoped
 public class AuctionsBean implements Serializable {
 
+	private static final long serialVersionUID = 1L;
+
 	private Map<String, League> leagues;
 
 	@PostConstruct
