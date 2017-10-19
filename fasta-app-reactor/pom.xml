@@ -20,6 +20,7 @@
 
 	<modules>
 		<module>fasta-app</module>
+		<module>fasta-app-web</module>
 	</modules>
 
 	<dependencyManagement>
@@ -27,7 +28,7 @@
 			<!-- Web -->
 			<dependency>
 				<groupId>${project.groupId}</groupId>
-				<artifactId>fasta-app</artifactId>
+				<artifactId>fasta-app-web</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 

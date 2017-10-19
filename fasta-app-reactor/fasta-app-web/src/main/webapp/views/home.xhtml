@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:p="http://primefaces.org/ui"
+	xmlns:f="http://java.sun.com/jsf/core"
+	template="/WEB-INF/templates/template.xhtml">
+
+	<ui:define name="contenu">
+		<p:remoteCommand name="update"
+			update="auctionPanel buttonPanel playersPanel teamsPanel"
+			ignoreAutoUpdate="true" />
+
+		<p:poll widgetVar="myPoll" interval="5" autoStart="false"
+			listener="#{teamViewBean.increment}" />
+
+		<div class="ui-g">
+			<div class="ui-g-8 ui-g-nopad">
+				<div class="ui-g-6">
+
+					<h:panelGroup id="auctionPanel">
+						<h:panelGroup rendered="#{teamViewBean.loggedIn}">
+							<h:panelGroup rendered="#{teamViewBean.admin}">
+								<p:commandButton value="Start Auction"
+									disabled="#{teamViewBean.player != null}"
+									action="#{teamViewBean.startAuction}" />
+								<p:commandButton value="End Auction"
+									rendered="#{teamViewBean.player != null}"
+									action="#{teamViewBean.endAuction}" />
+							</h:panelGroup>
+
+							<h:outputText id="txt_count" value="#{teamViewBean.timer.number}" />
+
+							<h:panelGrid rendered="#{teamViewBean.player != null}"
+								columns="2" style="width:100%">
+								<h:outputLabel value="#{teamViewBean.player.surname}" />
+								<p:dataTable id="bids" var="bid"
+									value="#{teamViewBean.getBids()}" rows="10">
+									<f:facet name="header">
+										<p:outputLabel value="Bids" />
+									</f:facet>
+									<p:column headerText="Team">
+										<p:outputLabel value="#{bid.teamName}" />
+									</p:column>
+									<p:column headerText="Value">
+										<p:outputLabel value="#{bid.value}" />
+									</p:column>
+								</p:dataTable>
+							</h:panelGrid>
+						</h:panelGroup>
+					</h:panelGroup>
+
+				</div>
+				<div class="ui-g-6">
+
+					<h:panelGroup id="buttonPanel">
+						<h:panelGroup rendered="#{not teamViewBean.loggedIn}">
+           				 Team: <p:inputText value="#{teamViewBean.teamName}" />
+
+							<p:spacer width="5" />
+							<p:commandButton value="Login"
+								action="#{teamViewBean.login(auctionsBean.getLeague('asta'))}"
+								icon="ui-icon-person" />
+						</h:panelGroup>
+
+						<h:panelGroup rendered="#{teamViewBean.loggedIn}" rendered="#{teamViewBean.admin}">
+							<h:panelGrid columns="2">
+								<p:inputText id="bidValue" value="#{teamViewBean.bid}" />
+								<p:commandButton id="sendBidAction" value="Send Bid"
+									disabled="#{teamViewBean.player == null}"
+									action="#{teamViewBean.sendBid}" />
+							</h:panelGrid>
+
+							<h:panelGrid columns="3">
+								<p:inputText id="messageValue" value="#{teamViewBean.message}" />
+								<p:commandButton id="sendMessageAction" disabled="#{teamViewBean.message}" value="Send Message"
+									action="#{teamViewBean.sendMessage}" />
+								<p:commandButton value="Disconnect"
+									actionListener="#{teamViewBean.disconnect}" />
+							</h:panelGrid>
+						</h:panelGroup>
+					</h:panelGroup>
+
+				</div>
+				<div class="ui-g-12">
+
+					<h:panelGroup id="playersPanel">
+						<h:panelGroup rendered="#{teamViewBean.loggedIn}">
+							<p:fieldset id="team" legend="#{teamViewBean.team.name}"
+								toggleable="true" rendered="#{not teamViewBean.admin}">
+						Budget Rimanente: #{teamViewBean.team.budget}						
+						<p:dataTable id="players" var="p"
+									value="#{teamViewBean.team.getPlayers()}">
+									<f:facet name="header">
+										<h:outputLabel value="Players" />
+									</f:facet>
+									<p:column headerText="Name">
+										<p:outputLabel value="#{p.name}" />
+									</p:column>
+									<p:column headerText="Surname">
+										<p:outputLabel value="#{p.surname}" />
+									</p:column>
+									<p:column headerText="Team">
+										<p:outputLabel value="#{p.team}" />
+									</p:column>
+									<p:column headerText="Role">
+										<p:outputLabel value="#{p.role}" />
+									</p:column>
+									<p:column headerText="Price">
+										<p:outputLabel value="#{p.price}" />
+									</p:column>
+								</p:dataTable>
+							</p:fieldset>
+						</h:panelGroup>
+					</h:panelGroup>
+
+				</div>
+			</div>
+			<div class="ui-g-4">
+				<div class="ui-g-12">
+					
+					<h:panelGroup id="teamsPanel">
+						<h:panelGroup rendered="#{teamViewBean.loggedIn}">
+							<h:panelGrid columns="2">
+								<p:dataTable id="teams" var="team"
+									value="#{auctionsBean.getTeams('asta')}">
+									<f:facet name="header">
+										<h:outputLabel value="Teams" />
+									</f:facet>
+									<p:column headerText="Name Team">
+										<p:outputLabel value="#{team.name}" />
+									</p:column>
+								</p:dataTable>
+							</h:panelGrid>
+						</h:panelGroup>
+					</h:panelGroup>
+					
+				</div>
+				<div class="ui-g-12">
+					
+					<p:fieldset id="chat" legend="Chat" toggleable="true">
+						<p:outputPanel id="public" layout="block"
+							styleClass="ui-corner-all ui-widget-content chatlogs" />
+					</p:fieldset>
+					
+				</div>
+			</div>
+		</div>
+
+	</ui:define>
+
+</ui:composition>
