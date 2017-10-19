@@ -63,7 +63,7 @@
 								icon="ui-icon-person" />
 						</h:panelGroup>
 
-						<h:panelGroup rendered="#{teamViewBean.loggedIn}" rendered="#{teamViewBean.admin}">
+						<h:panelGroup rendered="#{teamViewBean.loggedIn and !teamViewBean.admin}">
 							<h:panelGrid columns="2">
 								<p:inputText id="bidValue" value="#{teamViewBean.bid}" />
 								<p:commandButton id="sendBidAction" value="Send Bid"
