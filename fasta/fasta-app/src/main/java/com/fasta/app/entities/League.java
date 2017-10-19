@@ -14,9 +14,6 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.locks.StampedLock;
 import java.util.stream.Stream;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
-
 import com.fasta.app.comparators.PlayerComparator;
 import com.fasta.app.enums.Order;
 import com.fasta.app.enums.Role;
@@ -25,13 +22,13 @@ import com.fasta.app.push.Bid;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 
 @Getter
 @ToString
 @EqualsAndHashCode(of = "name")
+@Slf4j
 public class League {
-
-	private static final Logger logger = LogManager.getLogger(League.class);
 
 	private final String name;
 	private final BigDecimal globalBudget;
@@ -90,29 +87,29 @@ public class League {
 	}
 
 	public void callBid(Bid bid) {
-		logger.debug("callBid try optimistic read lock");
+		log.debug("callBid try optimistic read lock");
 		long stamp = stampLock.tryOptimisticRead();
 
 		bidValidation();
 
 		if (!stampLock.validate(stamp)) {
 
-			logger.debug("callBid read lock");
+			log.debug("callBid read lock");
 			stamp = stampLock.readLock();
 			try {
 				bidValidation();
 			} finally {
-				logger.debug("callBid read unlock");
+				log.debug("callBid read unlock");
 				stampLock.unlock(stamp);
 			}
 		}
 
-		logger.debug("callBid write lock");
+		log.debug("callBid write lock");
 		stamp = stampLock.writeLock();
 		try {
 			addBid(bid);
 		} finally {
-			logger.debug("callBid write unlock");
+			log.debug("callBid write unlock");
 			stampLock.unlock(stamp);
 		}
 
@@ -145,7 +142,7 @@ public class League {
 	}
 
 	public Bid sellPlayer() {
-		logger.info("sellPlayer write lock");
+		log.info("sellPlayer write lock");
 		long stamp = stampLock.writeLock();
 		Bid lastBid = null;
 		try {
@@ -169,7 +166,7 @@ public class League {
 			player.get().sell(price);
 			playerToBuy = null;
 		} finally {
-			logger.info("sellPlayer write unlock");
+			log.info("sellPlayer write unlock");
 			stampLock.unlock(stamp);
 		}
 

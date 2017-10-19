@@ -10,8 +10,6 @@ import javax.faces.bean.ManagedBean;
 import javax.faces.bean.SessionScoped;
 import javax.faces.context.FacesContext;
 
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 import org.primefaces.context.RequestContext;
 import org.primefaces.push.EventBus;
 import org.primefaces.push.EventBusFactory;
@@ -28,16 +26,18 @@ import com.fasta.app.push.PushMessage;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 
 @ManagedBean
 @SessionScoped
 @Getter
+@Slf4j
 public class TeamViewBean implements Serializable {
 
-	private static final Logger LOGGER = LogManager.getLogger(TeamViewBean.class);
+	private static final long serialVersionUID = 456082522929014854L;
+
 	private static final String BANDITORE = "banditore";
 	private static final EventBus EVENT_BUS = EventBusFactory.getDefault().eventBus();
-
 	private static final String CHANNEL = "/asta";
 
 	private League league;
@@ -86,7 +86,7 @@ public class TeamViewBean implements Serializable {
 			RequestContext.getCurrentInstance().execute("PF('myPoll').start();");
 			EVENT_BUS.publish(CHANNEL, new Bid(BigDecimal.ZERO, league.getName(), null));
 		} catch (IllegalStateException e) {
-			LOGGER.debug("Impossibile cominciare l'asta");
+			log.debug("Impossibile cominciare l'asta");
 			addMessage(FacesMessage.SEVERITY_ERROR, null, e.getMessage());
 		}
 	}
@@ -101,7 +101,7 @@ public class TeamViewBean implements Serializable {
 							+ " crediti";
 			EVENT_BUS.publish(CHANNEL, new Information("Banditore:" + sellMessage));
 		} catch (IllegalArgumentException e) {
-			LOGGER.debug("Impossibile terminare l'asta");
+			log.debug("Impossibile terminare l'asta");
 			addMessage(FacesMessage.SEVERITY_ERROR, null, e.getMessage());
 		}
 	}
@@ -113,7 +113,7 @@ public class TeamViewBean implements Serializable {
 			league.getTimer().reset();
 			EVENT_BUS.publish(CHANNEL, send);
 		} catch (IllegalStateException | IllegalArgumentException e) {
-			LOGGER.debug("Impossibile accettare l'offerta");
+			log.debug("Impossibile accettare l'offerta");
 			addMessage(FacesMessage.SEVERITY_ERROR, null, e.getMessage());
 		}
 	}
@@ -124,7 +124,7 @@ public class TeamViewBean implements Serializable {
 			timer.increment();
 			EVENT_BUS.publish(CHANNEL, (PushMessage) () -> "update");
 		} catch (TimeOutException e) {
-			LOGGER.debug("Tempo scaduto, asta terminata");
+			log.debug("Tempo scaduto, asta terminata");
 			endAuction();
 		}
 	}

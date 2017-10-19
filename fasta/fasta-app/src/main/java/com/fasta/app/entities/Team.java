@@ -29,8 +29,8 @@ public class Team {
 		this.budget = budget;
 		this.password = password;
 		PlayerComparator playerComparator = new PlayerComparator();
-		players = new TreeSet<Player>(playerComparator);
-		releasedPlayers = new TreeSet<Player>(playerComparator);
+		players = new TreeSet<>(playerComparator);
+		releasedPlayers = new TreeSet<>(playerComparator);
 	}
 
 	public boolean hasBudget(BigDecimal offert) {
